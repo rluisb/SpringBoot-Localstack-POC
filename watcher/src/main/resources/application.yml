@@ -1,0 +1,8 @@
+server:
+  port: 8081
+
+aws:
+  s3:
+    endpoint: http://127.0.0.1:4572
+    region: us-east-1
+    bucket: files-waiting
