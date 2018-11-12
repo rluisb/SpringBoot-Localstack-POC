@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:latest
     ports:
       - "4567-4584:4567-4584"
       - "${PORT_WEB_UI-8080}:${PORT_WEB_UI-8080}"
@@ -17,3 +17,4 @@ services:
     volumes:
       - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+

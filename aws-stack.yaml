@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  AppName:
+    Type: String
+    Default: flat-file-processor
+    AllowedValues:
+      - flat-file-processor
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    Default: dev
+Resources:
+  NewFilesBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: PublicRead
+      BucketName:
+        Fn::Join:
+          - '-'
+          - - Ref: AppName
+            - Ref: Environment
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Queue:
+              Fn::GetAtt:
+                - NewFilesQueue
+                - Arn
+    DependsOn:
+      - NewFilesQueue
+  QueuePolicy:
+    Type: 'AWS::SQS::QueuePolicy'
+    DependsOn:
+      - NewFilesQueue
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action:
+              - 'SQS:SendMessage'
+            Resource:
+              Fn::Join:
+                - ''
+                - - 'arn:aws:sqs:::'
+                  - '-'
+                  - Ref: AppName
+                  - Ref: Environment
+                  - '*'
+            Condition:
+              ArnLike:
+                'aws:SourceArn':
+                  Fn::Join:
+                    - ''
+                    - - 'arn:aws:s3:*:*:'
+                      - '-'
+                      - Ref: AppName
+                      - Ref: Environment
+      Queues:
+        Ref: NewFilesQueue
+  NewFilesQueue:
+    Properties:
+      QueueName: NewFilesQueue.fifo
+      FifoQueue: true
+      ContentBasedDeduplication: true
+    Type: 'AWS::SQS::Queue'
